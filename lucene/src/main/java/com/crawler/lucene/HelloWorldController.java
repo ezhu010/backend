@@ -41,7 +41,6 @@ public class HelloWorldController
     private static ArrayList<Tweet> tweets = new ArrayList<Tweet>();
     private static IndexWriter writer;
 
-
     public static String search(Path dir, String q) throws IOException, ParseException, org.apache.lucene.queryparser.classic.ParseException {
         String res = "";
         IndexReader rdr = DirectoryReader.open(FSDirectory.open(dir));
@@ -54,12 +53,12 @@ public class HelloWorldController
         List<ScoreDoc> documents = Arrays.asList(hits.scoreDocs);
 
         //Custom Ranking Equation
-        // tf.idf * 0.7 + like_count * 0.3
+        // tf.idf * 0.7 + like_count * 0.3 + follower_count * 0.2
         for(ScoreDoc scoreDoc : documents){
             Document doc = is.doc(scoreDoc.doc);
             Integer likeCount = Integer.parseInt(doc.get("like_count"));
-            System.out.println("Like Score: " + likeCount);
-            Float newScore = (float)(scoreDoc.score * 0.3 + likeCount * 0.7);
+            Integer follower_count = Integer.parseInt(doc.get("follower_count"));
+            Float newScore = (float)(scoreDoc.score* 0.6 + likeCount * 0.2 + follower_count*0.2);
             scoreDoc.score = newScore;
         }
         
@@ -69,7 +68,6 @@ public class HelloWorldController
                 return Float.compare(o1.score,o2.score);
             }
         });
-        
         //Take top 10 tweets with new scores
         for(ScoreDoc scoreDoc : documents) {
             if(top == 10){
@@ -100,8 +98,8 @@ public class HelloWorldController
     protected static Document getDocument(Tweet t) throws Exception {
         Document doc = new Document();
         doc.add(new TextField("contents", t.getText(), Field.Store.YES));
-        doc.add(new StringField("like_count", t.getLikeCount(), Field.Store.YES));
-        doc.add(new TextField("reply_count", t.getRelyCount(), Field.Store.YES));
+        doc.add(new TextField("like_count", t.getLikeCount(), Field.Store.YES));
+        doc.add(new TextField("follower_count", t.getFollowerCount(), Field.Store.YES));
         doc.add(new StringField("id", t.getId(), Field.Store.YES));
         return doc;
     }
@@ -117,9 +115,13 @@ public class HelloWorldController
                 String id = (String)((JSONObject) obj.get("data")).get("id");
                 String created_at = (String)((JSONObject)obj.get("data")).get("created_at");
                 int like_count = (Integer)((JSONObject)((JSONObject) obj.get("data")).get("public_metrics")).get("like_count");
-                int relpy_count = (Integer)((JSONObject)((JSONObject) obj.get("data")).get("public_metrics")).get("reply_count");
+                int follower_count = 0;
+                JSONArray follower_count_array = (JSONArray)((((JSONObject)(obj.get("includes"))).get("users")));
+                if(follower_count_array.length() > 0){
+                    follower_count = (Integer)(((JSONObject) (((JSONObject) follower_count_array.get(0)).get("public_metrics"))).get("followers_count"));
+                }
                 String text = (String)((JSONObject) obj.get("data")).get("text");
-                Tweet tweet = new Tweet(created_at,id, like_count, text, relpy_count);
+                Tweet tweet = new Tweet(created_at,id, like_count, text, follower_count);
                 tweets.add(tweet);
             }
         }

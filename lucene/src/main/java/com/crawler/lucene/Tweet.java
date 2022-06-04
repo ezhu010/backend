@@ -4,22 +4,22 @@ public class Tweet {
     private String id;
     private String creationDate;
     private int likeCount;
-    private int relpyCount;
+    private int follower_count;
     private String text;
 
-    public Tweet(String creationDate, String id, int likeCount, String text, int relpy_count) {
+    public Tweet(String creationDate, String id, int likeCount, String text, int follower_count) {
         this.creationDate = creationDate;
         this.id = id;
         this.likeCount = likeCount;
         this.text = text;
-        this.relpyCount = relpy_count;
+        this.follower_count = follower_count;
     }
     
     public String getLikeCount() {
         return Integer.toString(this.likeCount);
     }
-    public String getRelyCount() {
-        return Integer.toString(this.relpyCount);
+    public String getFollowerCount() {
+        return Integer.toString(this.follower_count);
     }
 
     public String getData() {
